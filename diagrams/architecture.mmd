@@ -1,13 +1,14 @@
-flowchart LR
-    U[用户 / 控制台] --> G[API Gateway]
-    G --> P[编排与审批]
-    P --> X[ChatExecutionService]
-    X --> W[有界执行器]
-    W --> T[安全工具层]
-    T --> C[命令 / 文件 / Docker / 数据库]
-    X --> B[SSE 可靠事件缓冲]
-    X --> A[审计与评测追踪]
-    X --> D[(SQLite WAL / Outbox)]
-    B --> U
-    A --> R[评测报告]
-    D --> R
+flowchart TB
+    U[Browser / Vue Panel] --> N[Nginx]
+    N --> G[Spring Boot Authentication Gateway<br/>Sa-Token · RBAC · HMAC v2]
+    G --> P[FastAPI Control Plane<br/>Planning · Approval · Audit · Evaluation]
+    P --> A[Managed Agent Node A<br/>Collection · Preflight · Execution]
+    P --> B[Managed Agent Node B<br/>Collection · Preflight · Execution]
+    P --> O[SQLite Outbox]
+    O --> R[RabbitMQ durable topic<br/>Publisher Confirm · Manual ACK]
+    R --> A
+    R --> B
+    R --> D[DLX / DLQ]
+    P --> S[(SQLite WAL / etcd<br/>Lease · Idempotency · Audit · Replay)]
+    A --> S
+    B --> S

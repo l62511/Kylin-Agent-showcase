@@ -1,48 +1,58 @@
 # 架构说明
 
-## 分层结构
+## TL;DR
 
-1. **接入层**：REST、SSE、A2A 与 MCP 入口统一处理认证、请求体边界、速率限制和审计上下文。
-2. **编排层**：将用户意图转为计划、工具调用和审批节点，并把人工接管作为显式状态而不是异常分支。
-3. **执行治理层**：`ChatExecutionService` 统一 REST/A2A 生命周期；请求指纹、SQLite WAL、owner token、租约 TTL 和取消注册表共同约束重复副作用。
-4. **资源控制层**：同步任务进入 8 worker/32 队列的有界执行器，SSE 使用 64 worker/512 队列的共享池；容量耗尽返回可识别的 503，超时返回 504。
-5. **工具与安全层**：命令、文件、Docker、数据库和知识导入都经过安全判定、路径归一化、参数校验、输出上限和敏感信息脱敏。
-6. **状态与观测层**：审计链、执行记录、事件 outbox、评测追踪和指标端点提供可回放证据。
+Kylin Agent 将“接入、编排、审批、执行、证据、评测”拆成可独立限流的控制面与节点面。核心取舍是：模型只产生受约束的计划，执行器成为副作用唯一入口，SQLite WAL/Outbox、RabbitMQ 和事件序列共同承担可恢复性。
+
+## 问题边界
+
+普通 Agent 往往把 HTTP handler、模型调用、工具执行和结果拼接写在一条链路里；重试时会重复副作用，断线时无法判断终态，节点状态和控制台状态也可能分叉。本项目把边界显式化：Gateway 负责身份与协议，Control Plane 负责意图、计划、审批、审计和评测，Agent Node 负责采集、预检和执行。
+
+## 六服务拓扑
+
+1. **Browser/Vue Panel**：提交请求、显示 SSE、审批和回放。
+2. **Nginx**：TLS、静态资源和反向代理边界。
+3. **Spring Boot Gateway**：Sa-Token、RBAC、CSRF、HMAC v2 和外部会话治理。
+4. **FastAPI Control Plane**：Planning、Approval、Audit、Evaluation 及统一执行生命周期。
+5. **Agent Node A/B**：节点身份、能力采集、Preflight、受限工具执行和证据回传。
+6. **RabbitMQ + SQLite/etcd**：durable topic、publisher confirm、manual ACK、DLX/DLQ、Outbox、WAL 状态与租约。
+
+可编辑拓扑：[`diagrams/architecture.mmd`](../diagrams/architecture.mmd)；渲染图：[`assets/architecture.svg`](../assets/architecture.svg)。
 
 ## 关键数据流
 
 ```mermaid
 sequenceDiagram
     participant U as 用户/控制台
-    participant G as API Gateway
-    participant O as 编排与审批
+    participant G as Gateway
+    participant C as Control Plane
     participant E as 统一执行服务
-    participant T as 受治理工具
-    participant S as SQLite/WAL + Outbox
-    U->>G: 请求 / REST / A2A / SSE
-    G->>O: 认证、限流、校验、审计上下文
-    O->>E: request_id + canonical fingerprint
+    participant N as Agent Node
+    participant S as WAL/Outbox
+    U->>G: REST / A2A / SSE
+    G->>C: 身份、限流、审计上下文
+    C->>E: request_id + canonical fingerprint
     E->>S: acquire / heartbeat / complete
-    E->>T: bounded worker + cancellation
-    T-->>E: 结果、截断标记、证据
-    E->>S: 状态与可靠事件
+    E->>N: 受限工具调用 + HMAC v2
+    N-->>E: 结果、证据、截断状态
+    E->>S: 终态与可靠事件
     S-->>U: 可重放终态/增量事件
 ```
 
-## 重点工程决策
+## 非显而易见的工程决策
 
-### 一次执行，多种协议
+| 多数实现 | 本项目机制 | 避免的问题 |
+| --- | --- | --- |
+| REST/A2A/SSE 各自维护生命周期 | `ChatExecutionService` 统一 acquire、heartbeat、complete、cancel | 同一 `client_request_id` 在不同协议下产生两次副作用 |
+| 进程内永久锁 | owner token + TTL 租约 + 心跳 + `unknown_outcome` | worker 崩溃后请求永久卡死，或未知结果被误判为可重试 |
+| 每个 SSE 请求创建线程 | 共享 64 workers / 512 queue，有界 reliable buffer | 并发连接放大线程数，终态事件被普通日志挤掉 |
+| `capture_output=True` 后整体裁剪 | 64 KiB 分块、100 MiB 命令上限、20 MiB SafeExecutor 上限 | 大输出先占满内存，进程被 OOM 杀死 |
+| 文件先 Base64 再传输 | `FileResponse`/`StreamingResponse`、Range、Blob、AbortController | 20 MiB 文件额外膨胀约 33%，下载期间无法取消 |
 
-常见做法是在 REST、A2A 和流式接口分别实现重试、取消和状态写入，协议之间容易出现“一边成功、一边仍显示运行中”。这里把生命周期收敛到统一执行服务，并用 SQLite WAL 作为跨实例的持久权威记录。
+## 验证与边界
 
-### 租约而不是永久锁
+- PERF-001～006 已有针对性证据；文件流改造 targeted suite 为 **107 passed / 3 skipped**。
+- 资源上限：同步池 **8 workers / 32 queue**，SSE 池 **64 workers / 512 queue**，命令输出 **100 MiB**，SafeExecutor 输出 **20 MiB**，文件流分块 **64 KiB**。
+- 这些数字是代码契约与 targeted tests 的结果，不等于生产集群容量基准；生产容量仍需在目标 LoongArch 部署环境复测。
 
-进程崩溃时永久运行锁会让相同请求永远无法恢复。执行记录持有 owner token、租约到期时间和心跳；过期租约可以被新执行者接管，仍保留未知结果的冲突语义。
-
-### 可靠事件与普通阶段事件分离
-
-普通阶段事件可以合并或丢弃，终态、审批、错误和取消事件不能与普通事件竞争同一个容量。SSE 缓冲区因此分离 reliable deque，并暴露 dropped/coalesced 指标。
-
-### 输出先限界，再交给上层
-
-命令和 Docker 日志采用分块读取 + 有界尾部环形缓冲；持续 100 MiB 输出不会按总量扩张内存，结果通过 `truncated` 明确告知调用方。
+相关文档：[`security-layers.md`](security-layers.md) · [`reliability.md`](reliability.md) · [`trace-replay.md`](trace-replay.md) · [`evaluation.md`](evaluation.md)

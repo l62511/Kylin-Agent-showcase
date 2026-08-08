@@ -1,56 +1,44 @@
-# 评测中心：从“有分数”到“能解释”
+# 评测中心与数据血缘
 
-## 公开的脱敏结果
+## TL;DR
 
-本目录中的 JSON 是从项目评测产物提炼出的可公开摘要，保留运行 ID、版本、数据规模、section、分母、失败数、hard gate 和解释字段；原始 prompt、业务文档、节点地址、完整工具返回和完整数据集不发布。
+评测中心以冻结 manifest 驱动，不再把“可用数据量”“本次执行量”“兼容投影量”混成一个数字。当前 5 类唯一来源数据已全部接入，共 **4,200 条**；加载视图为 **4,380 行**，其中 **180 行**是 Agent 单工具兼容投影，不新增 gold case。
 
-| 文件 | 版本/日期 | 关键结果 |
-| --- | --- | --- |
-| `evaluation-results-v0.6.169.json` | 2026-07-15 | 255 总用例，252 通过，1 失败，2 不可用，pass rate 99.60%，score 0.9893，hard gate 通过 |
-| `evaluation-results-v0.6.203.json` | 2026-07-28 | 769 总用例，764 通过，5 失败，2 个安全关键失败，raw pass rate 99.35%，hard gate 失败，最终 score 0 |
-| `tool-effect-summary-v0.6.169.json` | 2026-07-15 | 87 个注册工具；22 个当前主机可执行且 22/22 通过；28 不可用、37 未执行，均不计为通过 |
-| `performance-baseline-v0.6.169.json` | 2026-07-14 | 2 个本地性能用例；平均 P50 55.39ms、P90 55.62ms、P99 55.63ms |
+## 当前真实数据口径
 
-## 为什么 2,480 条没有全部进入旧结果
+| 数据集合 | 条数 | 是否计入唯一来源 |
+| --- | ---: | --- |
+| OpsIntent/Planner | 800 | 是 |
+| Evidence Gate | 1,600 | 是 |
+| OpsSafety | 1,200 | 是 |
+| Fault Recovery | 300 | 是 |
+| OpsRAG | 300 | 是 |
+| Agent 单工具兼容投影 | 180 | 否，来自 OpsIntent |
+| **唯一来源合计** | **4,200** | — |
+| **加载行合计** | **4,380** | 含 180 条投影 |
 
-2026-07-28 的产物记录了 4 个 benchmark 的可用规模：Agent 180、Planner 800、RAG 300、Safety 1,200，合计 2,480 条。但当时评测运行配置只选择了 Agent 40、Planner 160、RAG 240、Safety 240，共 680 条 benchmark 用例；再加上 baseline、chunking、审批、性能等系统 section，最终总数是 769。
+对应 manifest：主项目 `datasets/paper/evidence_governed_aiops_zh_v1/manifest.json`，revision **1.3.0**，工具目录快照 **87 个工具契约**。`split=all` 表示全覆盖回归，不等同于 holdout 泛化结果。
 
-因此：
+## 评测维度
 
-- `available_records` 不是 `evaluated_records`，不能把数据集规模直接当作评测样本量。
-- 旧结果的 99.35% 只能解释为“该次选择集上的 raw pass rate”。
-- Safety section 的 5 个失败中有 2 个被标记为 critical，hard gate 将最终 score 置为 0；这比把失败样本排除后给出高分更可信。
-- 全量评测重构的验收标准是 manifest 明确记录每个 dataset 的总数、split、选择规则和排除原因，并让 2,480 条全部进入可追踪评测或明确记录为合法排除。
+- 任务成功率：按目标完成和 Evidence Gate 判定，不接受“模型说完成”。
+- 工具调用准确率：工具选择、Schema 参数、节点绑定、顺序、重复调用和拒绝原因。
+- 结果正确性与一致性：跨 REST/A2A/SSE、重试和回放比较结构化终态。
+- 事实有据性：回答必须绑定检索片段、工具回执或审计记录。
+- 延迟与成本：首事件/终态延迟分位数、模型输入/输出 Token、工具轮次和重试。
+- 人工接管：审批、人工核验、unknown outcome 和安全升级单独计数。
 
-## 维度定义
+## 已公开的历史结果
 
-### 任务成功率
+- v0.6.203：**769** 条已运行样本，**764/769 = 99.35% raw pass**；2 个 critical safety failure 触发 hard gate，最终 score 为 **0**。
+- v0.6.169：**255** 条样本，**252** 条通过，pass rate **99.60%**，score **0.9893**。
+- v0.6.169 工具效果：注册 **87** 个工具，其中 **22** 个主机可执行，**22/22** 验证通过；不可用和未执行不计为通过。
+- v0.6.169 性能基线：**2** 个本地用例，P50 **55.39 ms**、P90 **55.62 ms**、P99 **55.63 ms**。
 
-以任务目标断言为准：例如文件状态、容器状态、审计记录和回滚证据都满足，才算成功。HTTP 200、模型输出“已完成”或工具返回非空不能单独构成成功。
-
-### 工具调用准确率
-
-至少拆成 tool selection、参数 schema、参数完整性、调用顺序、重复调用和拒绝原因；对于需要用户补充字段的请求，澄清安全率与执行通过率分开统计。
-
-### 正确性与一致性
-
-将同一 `trace_id` 的重复提交、跨执行实例、SSE 断线重连和 A2A/REST 双入口视为同一业务事实，比较规范化结果、事件序列和终态，不按文本相似度去重。
-
-### 事实有据性
-
-每个关键断言都要绑定检索片段、工具原始结果或审计记录 ID；无法建立证据链的回答应进入 unsupported/needs_review，而不是自动通过。
-
-### 延迟、Token 与人工接管
-
-每次运行记录首事件、首 token、工具完成、终态的时间戳；模型输入/输出 token、工具轮次和重试；以及主动审批、风险升级、超时接管和异常兜底的原因与耗时。
+历史文件：[`evaluation-results-v0.6.203.json`](../evaluation/evaluation-results-v0.6.203.json)、[`evaluation-results-v0.6.169.json`](../evaluation/evaluation-results-v0.6.169.json)、[`tool-effect-summary-v0.6.169.json`](../evaluation/tool-effect-summary-v0.6.169.json)、[`performance-baseline-v0.6.169.json`](../evaluation/performance-baseline-v0.6.169.json)。
 
 ## 结果解释约束
 
-报告必须同时展示：
+4,200 条已接入不等于 4,200 条已经在本次运行中执行。Showcase 只声明 manifest、split、case identity 和 provenance 可核验；本轮 4,380 行全量运行结果须在主项目全部任务书代码项完成后集中生成，再将脱敏 JSON 发布到此仓库。任何 unavailable、not_executed 或 hard gate 失败都保留在分母中。
 
-1. 分子：passed、failed、critical failures。
-2. 分母：total、unavailable、not_executed，以及它们是否计入 gate。
-3. provenance：数据集指纹、结果 schema、代码版本、运行模式、模型调用开关。
-4. 原始失败索引：至少保留内部可回放的 case ID 和失败原因摘要。
-
-展示仓库只公开摘要；完整失败样本和数据集继续保留在主项目及毕业设计迭代环境中。
+图示：[`../assets/benchmark.svg`](../assets/benchmark.svg) · 源文件：[`../diagrams/benchmark.mmd`](../diagrams/benchmark.mmd)

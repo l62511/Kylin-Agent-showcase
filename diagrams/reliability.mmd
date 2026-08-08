@@ -1,0 +1,14 @@
+sequenceDiagram
+    participant C as Control Plane
+    participant O as SQLite Outbox
+    participant R as RabbitMQ
+    participant N as Agent Node
+    C->>O: transactionally write event
+    O-->>C: pending
+    O->>R: publish
+    R-->>O: publisher confirm
+    O-->>O: mark sent
+    R->>N: deliver
+    N-->>R: manual ACK after durable handling
+    R-->>R: failure → DLX → DLQ
+    Note over O,R: RabbitMQ restart后，未确认 outbox 事件继续投递

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="520" viewBox="0 0 1500 520" role="img" aria-labelledby="title desc">
+  <title id="title">Kylin Agent 四层纵深安全防御</title>
+  <desc id="desc">Input, planning, execution and audit layers with a high-risk approval path.</desc>
+  <defs><marker id="a" markerWidth="12" markerHeight="12" refX="10" refY="4" orient="auto"><path d="M0,0 L0,8 L11,4z" fill="#3857d6"/></marker><style>.b{stroke:#26364d;stroke-width:2;rx:16;ry:16}.t{font:700 22px 'Segoe UI','Microsoft YaHei',sans-serif;fill:#10233f}.s{font:400 16px 'Segoe UI','Microsoft YaHei',sans-serif;fill:#34465d}.a{stroke:#3857d6;stroke-width:3;fill:none;marker-end:url(#a)}</style></defs>
+  <rect width="1500" height="520" fill="#f7f9fc"/><text x="55" y="55" class="t">四层纵深安全：越靠近副作用，校验越确定</text>
+  <rect x="55" y="145" width="285" height="170" class="b" fill="#ffe3e0"/><text x="197" y="195" text-anchor="middle" class="t">L1 输入层</text><text x="197" y="230" text-anchor="middle" class="s">硬拦截危险词/混淆输入</text><text x="197" y="263" text-anchor="middle" class="s">LLM 只负责语义分类</text><text x="197" y="296" text-anchor="middle" class="s">wipe all → BLOCK</text>
+  <rect x="410" y="145" width="285" height="170" class="b" fill="#fff0cf"/><text x="552" y="195" text-anchor="middle" class="t">L2 规划层</text><text x="552" y="230" text-anchor="middle" class="s">工具注册表 / schema</text><text x="552" y="263" text-anchor="middle" class="s">能力候选路由</text><text x="552" y="296" text-anchor="middle" class="s">缺失能力不进入候选</text>
+  <rect x="765" y="145" width="285" height="170" class="b" fill="#e4edff"/><text x="907" y="195" text-anchor="middle" class="t">L3 执行层</text><text x="907" y="230" text-anchor="middle" class="s">路径/命令/参数硬校验</text><text x="907" y="263" text-anchor="middle" class="s">action_id 幂等账本</text><text x="907" y="296" text-anchor="middle" class="s">高风险逐动作审批</text>
+  <rect x="1120" y="145" width="285" height="170" class="b" fill="#e5f4e8"/><text x="1262" y="195" text-anchor="middle" class="t">L4 审计层</text><text x="1262" y="230" text-anchor="middle" class="s">Hash Chain / Outbox</text><text x="1262" y="263" text-anchor="middle" class="s">工具回执与证据绑定</text><text x="1262" y="296" text-anchor="middle" class="s">失败可回放、可追责</text>
+  <path d="M340 230h70M695 230h70M1050 230h70" class="a"/>
+  <rect x="330" y="395" width="840" height="65" class="b" fill="#243550" stroke="#243550"/><text x="750" y="436" text-anchor="middle" font="600 19px 'Segoe UI','Microsoft YaHei',sans-serif" fill="#fff">高风险分支：拒绝 / 澄清 / 等待人工接管 → 通过 action 校验后才执行</text>
+  <path d="M197 315V360H750V395M907 315V360M1262 315V360H750" class="a"/>
+</svg>

@@ -1,0 +1,7 @@
+flowchart LR
+    I[用户输入] --> L1[L1 输入层<br/>确定性硬拦截 + 语义风险分类]
+    L1 --> L2[L2 规划层<br/>工具契约 + 候选路由]
+    L2 --> L3[L3 执行层<br/>参数硬校验 + action_id + 审批]
+    L3 --> L4[L4 审计层<br/>Hash Chain + Outbox + Evidence]
+    L1 -. high risk .-> L3
+    L1 --> X[拒绝 / 澄清 / 等待人工接管]
