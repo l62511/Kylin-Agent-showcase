@@ -51,7 +51,7 @@ SQLite WAL / etcd：执行记录、租约、幂等账本、审计链与事件回
 
 可编辑图：[`diagrams/architecture.mmd`](diagrams/architecture.mmd)；安全、消息和评测图位于 [`assets/`](assets/)。
 
-## 四个最值得追问的工程决策
+## 四个工程决策
 
 | 常见实现 | Kylin Agent 的机制 | 避免的具体故障 |
 | --- | --- | --- |
