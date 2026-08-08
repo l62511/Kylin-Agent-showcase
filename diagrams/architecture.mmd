@@ -1,0 +1,13 @@
+flowchart LR
+    U[用户 / 控制台] --> G[API Gateway]
+    G --> P[编排与审批]
+    P --> X[ChatExecutionService]
+    X --> W[有界执行器]
+    W --> T[安全工具层]
+    T --> C[命令 / 文件 / Docker / 数据库]
+    X --> B[SSE 可靠事件缓冲]
+    X --> A[审计与评测追踪]
+    X --> D[(SQLite WAL / Outbox)]
+    B --> U
+    A --> R[评测报告]
+    D --> R

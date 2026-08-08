@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="760" viewBox="0 0 1400 760" role="img" aria-labelledby="title desc">
+  <title id="title">Kylin Agent architecture overview</title>
+  <desc id="desc">Layered architecture from user interfaces through governance, bounded execution, secure tools and auditable state.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#4c6fff"/></marker>
+    <style>
+      .box{stroke:#29405f;stroke-width:2;rx:16;ry:16}
+      .label{font:600 22px 'Segoe UI','Microsoft YaHei',sans-serif;fill:#12233f}
+      .small{font:400 17px 'Segoe UI','Microsoft YaHei',sans-serif;fill:#30445f}
+      .arrow{stroke:#4c6fff;stroke-width:3;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1400" height="760" fill="#f5f8fc"/>
+  <text x="70" y="72" class="label" font-size="32">Kylin Agent · governed runtime</text>
+  <text x="70" y="105" class="small">第 15 届中国软件杯全国三等奖项目 · Showcase architecture</text>
+  <rect x="70" y="150" width="250" height="120" class="box" fill="#e4edff"/>
+  <text x="195" y="198" text-anchor="middle" class="label">接入层</text><text x="195" y="232" text-anchor="middle" class="small">REST · SSE · A2A · MCP</text>
+  <rect x="390" y="150" width="250" height="120" class="box" fill="#e8f7f1"/>
+  <text x="515" y="198" text-anchor="middle" class="label">编排与审批</text><text x="515" y="232" text-anchor="middle" class="small">意图 · 计划 · 人工接管</text>
+  <rect x="710" y="150" width="300" height="120" class="box" fill="#fff2d9"/>
+  <text x="860" y="198" text-anchor="middle" class="label">统一执行服务</text><text x="860" y="232" text-anchor="middle" class="small">指纹 · 租约 · 取消 · 回放</text>
+  <rect x="1080" y="150" width="250" height="120" class="box" fill="#f5e8ff"/>
+  <text x="1205" y="198" text-anchor="middle" class="label">评测与审计</text><text x="1205" y="232" text-anchor="middle" class="small">证据 · 指标 · 成本</text>
+  <path d="M320 210 H390 M640 210 H710 M1010 210 H1080" class="arrow"/>
+  <rect x="230" y="390" width="300" height="140" class="box" fill="#e9f2ff"/>
+  <text x="380" y="442" text-anchor="middle" class="label">有界资源层</text><text x="380" y="478" text-anchor="middle" class="small">8/32 同步池</text><text x="380" y="506" text-anchor="middle" class="small">64/512 SSE 池</text>
+  <rect x="600" y="390" width="300" height="140" class="box" fill="#fff0ec"/>
+  <text x="750" y="442" text-anchor="middle" class="label">安全工具层</text><text x="750" y="478" text-anchor="middle" class="small">命令 · 文件 · Docker</text><text x="750" y="506" text-anchor="middle" class="small">数据库 · 知识导入</text>
+  <rect x="970" y="390" width="300" height="140" class="box" fill="#edf5e5"/>
+  <text x="1120" y="442" text-anchor="middle" class="label">持久状态层</text><text x="1120" y="478" text-anchor="middle" class="small">SQLite WAL · Outbox</text><text x="1120" y="506" text-anchor="middle" class="small">执行记录 · 事件回放</text>
+  <path d="M860 270 V350 H380 V390 M860 270 V390 H750 M860 270 V350 H1120 V390" class="arrow"/>
+  <rect x="300" y="620" width="800" height="70" class="box" fill="#12233f" stroke="#12233f"/>
+  <text x="700" y="664" text-anchor="middle" font="600 22px 'Segoe UI','Microsoft YaHei',sans-serif" fill="#ffffff">边界：幂等 · 限流 · 超时 · 脱敏 · 可验证证据</text>
+  <path d="M380 530 V620 M750 530 V620 M1120 530 V620" class="arrow"/>
+</svg>
