@@ -9,6 +9,15 @@
 
 本仓库是 Kylin Agent 的 Showcase，不包含源码、模型密钥、生产数据或可直接部署的二进制包。源码暂不公开，是因为项目将作为毕业设计继续迭代；这里公开的是可复核的架构决策、失败边界、评测口径和脱敏结果。
 
+## 当前验证基线
+
+主项目版本：**v0.6.280**（2026-08-09）。本轮任务书条目已全部完成，生产执行路径默认使用 `agent-runtime-governance` v0.9.1；原生治理实现仅作为显式 legacy fallback 保留。
+
+- 全量 Python 测试：**2352 passed / 4 skipped**；总覆盖率 **80.58%**，覆盖率门禁为 80%。
+- GitHub Actions 自动化链路：Python 3.10/3.11/3.14、Java、前端真实浏览器、评测、打包、Future AGI、LoongArch OTLP 和 Docker 双拓扑 smoke 全部通过。
+- Docker 多 Agent smoke 覆盖 RabbitMQ、控制面、两个节点、节点绑定、远程只读执行、监控、RAG 去重和审计导出。
+- 供应链摘要按 LF 规范化，Windows 与 Ubuntu 检出同一文本内容时得到一致 SHA-256；RabbitMQ 健康探针不依赖脚本执行位。
+
 ## 30 秒看懂项目
 
 Kylin Agent 把一条自然语言运维请求收敛为：
@@ -92,7 +101,7 @@ SQLite WAL / etcd：执行记录、租约、幂等账本、审计链与事件回
 - 同步执行池默认 **8 workers / 32 queue**；SSE 共享池默认 **64 workers / 512 queue**，容量耗尽显式返回 503，deadline 返回 504。
 - 持续 **100 MiB** 命令输出、**20 MiB** SafeExecutor 输出在有界内存内完成，响应标记 `truncated`。
 - 文件下载使用 64 KiB 分块，支持 `Accept-Ranges: bytes`、206/416、`Content-Disposition` 和客户端取消。
-- 2026-08-08 文件流整改定向回归 **107 passed / 3 skipped**；完整项目测试在全部任务书条目完成后统一运行。
+- 2026-08-08 文件流整改定向回归 **107 passed / 3 skipped**；2026-08-09 任务书完成后的全量项目测试为 **2352 passed / 4 skipped**。
 
 ## 技术栈与适配
 
@@ -115,6 +124,8 @@ Python · FastAPI · LangGraph · Spring Boot · Vue · RabbitMQ · SQLite WAL /
 ## 从 Kylin Agent 到通用治理 SDK
 
 在项目中反复遇到的审批一致性、副作用幂等、未知结果对账和证据链问题，被进一步抽象为框架无关的 [Agent Runtime Governance SDK](https://github.com/Success6666/agent-runtime-governance)。这条路径体现的是：真实系统故障 → 提炼跨框架契约 → 独立运行时治理组件，而不是简单复制项目代码。
+
+当前主路径由 SDK 负责 action binding、Schema 校验、审批决策、持久化幂等、UNKNOWN 结果和 JSONL 审计；Kylin Agent Adapter 负责业务注册表、节点上下文和公开结果映射。专项测试覆盖安全决策透传、预演/正式执行幂等键隔离、内部参数隔离、Schema 拒绝、审计脱敏和 legacy fallback；Graph、MCP、ReAct 通用回归验证 SDK 接入后的业务语义。SDK 本身未发现缺陷，项目没有复制修补 SDK 代码。
 
 ## 源码边界
 

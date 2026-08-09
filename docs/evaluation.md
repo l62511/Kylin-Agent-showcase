@@ -37,8 +37,12 @@
 
 历史文件：[`evaluation-results-v0.6.203.json`](../evaluation/evaluation-results-v0.6.203.json)、[`evaluation-results-v0.6.169.json`](../evaluation/evaluation-results-v0.6.169.json)、[`tool-effect-summary-v0.6.169.json`](../evaluation/tool-effect-summary-v0.6.169.json)、[`performance-baseline-v0.6.169.json`](../evaluation/performance-baseline-v0.6.169.json)。
 
+## v0.6.280 验证记录
+
+主项目 v0.6.280 的工程 CI 已完成一次全链路验证：全量测试 **2352 passed / 4 skipped**，覆盖率 **80.58%**；前端真实浏览器、Java、评测、打包、三版本 Python、Future AGI、LoongArch OTLP 和 Docker 双拓扑 smoke 均通过。该记录是工程质量门禁，不等同于 4,200 条评测数据集全部执行结果。
+
 ## 结果解释约束
 
-4,200 条已接入不等于 4,200 条已经在本次运行中执行。Showcase 只声明 manifest、split、case identity 和 provenance 可核验；本轮 4,380 行全量运行结果须在主项目全部任务书代码项完成后集中生成，再将脱敏 JSON 发布到此仓库。任何 unavailable、not_executed 或 hard gate 失败都保留在分母中。
+4,200 条已接入不等于 4,200 条已经在本次评测运行中执行。Showcase 只声明 manifest、split、case identity 和 provenance 可核验；评测结果须与工程 CI 质量门禁分开表述。任何 unavailable、not_executed 或 hard gate 失败都保留在分母中。
 
 图示：[`../assets/benchmark.svg`](../assets/benchmark.svg) · 源文件：[`../diagrams/benchmark.mmd`](../diagrams/benchmark.mmd)
