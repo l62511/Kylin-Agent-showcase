@@ -11,14 +11,15 @@
 
 ## 当前验证基线
 
-主项目版本：**v0.6.280**（2026-08-09）。本轮任务书条目已全部完成，生产执行路径默认使用 `agent-runtime-governance` v0.9.1；原生治理实现仅作为显式 legacy fallback 保留。
+主项目版本：**v0.6.280**（2026-08-09）。
+生产执行路径默认使用 `agent-runtime-governance` v0.9.1；原生治理实现仅作为显式 legacy fallback 保留。
 
 - 全量 Python 测试：**2352 passed / 4 skipped**；总覆盖率 **80.58%**，覆盖率门禁为 80%。
 - GitHub Actions 自动化链路：Python 3.10/3.11/3.14、Java、前端真实浏览器、评测、打包、Future AGI、LoongArch OTLP 和 Docker 双拓扑 smoke 全部通过。
 - Docker 多 Agent smoke 覆盖 RabbitMQ、控制面、两个节点、节点绑定、远程只读执行、监控、RAG 去重和审计导出。
 - 供应链摘要按 LF 规范化，Windows 与 Ubuntu 检出同一文本内容时得到一致 SHA-256；RabbitMQ 健康探针不依赖脚本执行位。
 
-## 30 秒看懂项目
+## 快速了解
 
 Kylin Agent 把一条自然语言运维请求收敛为：
 
@@ -73,9 +74,9 @@ SQLite WAL / etcd：执行记录、租约、幂等账本、审计链与事件回
 
 安全防御的分层图：[`assets/security-layers.svg`](assets/security-layers.svg)。可靠事件时序：[`assets/reliability-sequence.svg`](assets/reliability-sequence.svg)。
 
-## 评测证据：先说分母，再说分数
+## 评测证据：
 
-当前公开结果分为“数据集清单”和“历史运行产物”两种口径，不能混写：
+当前公开结果分为“数据集清单”和“历史运行产物”两种口径：
 
 | 口径 | 数字 | 含义 |
 | --- | ---: | --- |
